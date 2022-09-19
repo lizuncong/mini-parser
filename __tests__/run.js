@@ -1,6 +1,11 @@
 const { Parser } = require('../src/parser')
 const assert = require('assert')
-const tests = [require('./literals-test'), require('./statement-list-test')]
+const tests = [
+    require('./literals-test'),
+    require('./statement-list-test'),
+    require('./block-test'),
+    require('./empty-statement-test')
+]
 
 const parser = new Parser()
 
@@ -12,16 +17,20 @@ function exec() {
          * 多行注释
          * 
         */
-        "hello";
-        // Number;
-        42;
+        {
+            42;
+            {
+                "hello";
+            }
+        }
+    
     `
 
     const ast = parser.parse(program)
 
     console.log(JSON.stringify(ast, null, 2))
 }
-// exec()
+exec()
 
 function test(program, expected) {
     const ast = parser.parse(program)
