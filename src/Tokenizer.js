@@ -5,7 +5,14 @@ const Spec = [
     [/^;/, ';'], // 跳过分号
     [/^\{/, '{'],
     [/^\}/, '}'],
+    [/^\(/, '('],
+    [/^\)/, ')'],
     [/^\d+/, "NUMBER"],
+    [/^\w+/, 'IDENTIFIER'],
+    [/^=/, 'SIMPLE_ASSIGN'], // 简单的赋值
+    [/^[\*\/\+\-]=/, 'COMPLEX_ASSIGN'],
+    [/^[+\-]/, 'ADDITIVE_OPERATOR'],
+    [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
     [/^"[^"]*"/, "STRING"],
     [/^'[^']*'/, "STRING"],
 ];

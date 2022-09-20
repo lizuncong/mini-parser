@@ -4,7 +4,8 @@ const tests = [
     require('./literals-test'),
     require('./statement-list-test'),
     require('./block-test'),
-    require('./empty-statement-test')
+    require('./empty-statement-test'),
+    require('./math-test')
 ]
 
 const parser = new Parser()
@@ -13,17 +14,7 @@ const parser = new Parser()
 // exec用于手动测试
 function exec() {
     const program = ` 
-        /**
-         * 多行注释
-         * 
-        */
-        {
-            42;
-            {
-                "hello";
-            }
-        }
-    
+      x += 1;
     `
 
     const ast = parser.parse(program)
