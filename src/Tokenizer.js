@@ -9,12 +9,15 @@ const Spec = [
     [/^\)/, ')'],
     [/^,/, ','],
     [/^\blet\b/, 'let'],
+    [/^\bif\b/, 'if'],
+    [/^\belse\b/, 'else'],
     [/^\d+/, "NUMBER"],
     [/^\w+/, 'IDENTIFIER'],
     [/^=/, 'SIMPLE_ASSIGN'], // 简单的赋值
     [/^[\*\/\+\-]=/, 'COMPLEX_ASSIGN'],
     [/^[+\-]/, 'ADDITIVE_OPERATOR'],
     [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
+    [/^[><]=?/, 'RELATIONAL_OPERATOR'],
     [/^"[^"]*"/, "STRING"],
     [/^'[^']*'/, "STRING"],
 ];

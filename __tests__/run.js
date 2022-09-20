@@ -6,7 +6,9 @@ const tests = [
     require('./block-test'),
     require('./empty-statement-test'),
     require('./math-test'),
-    require('./variable-test')
+    require('./variable-test'),
+    require('./if-test'),
+    require('./relational-test')
 ]
 
 const parser = new Parser()
@@ -15,12 +17,12 @@ const parser = new Parser()
 // exec用于手动测试
 function exec() {
     const program = ` 
-     let y;
-     let a, b;
-     let c, d = 10;
-     let x = 64;
-     let foo = bar = 10;
-     r = 10;
+        x + 5 > 10;
+        if(y >= 10){
+            x = 0;
+        } else {
+            x += 1;
+        }
     `
 
     const ast = parser.parse(program)
@@ -33,6 +35,6 @@ function test(program, expected) {
     const ast = parser.parse(program)
     assert.deepEqual(ast, expected)
 }
-tests.forEach(testRun => testRun(test))
+// tests.forEach(testRun => testRun(test))
 
 console.log('All assertions passed!')

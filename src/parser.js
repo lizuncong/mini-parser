@@ -43,6 +43,7 @@ class Parser {
      *  | BlockStatement
      *  | EmptyStatement
      *  | VariableStatement
+     *  | IfStatement
      *  ;
      *
      */
@@ -50,12 +51,34 @@ class Parser {
         switch (this._lookahead.type) {
             case ";":
                 return this.EmptyStatement();
+            case 'if':
+                return this.IfStatement()
             case "{":
                 return this.BlockStatement();
             case 'let':
                 return this.VariableStatement()
             default:
                 return this.ExpressionStatement();
+        }
+    }
+    /**
+     * IfStatement
+     *  : 'if' '(' Expression ')' Statement
+     *  | 'if' '(' Expression ')' Statement 'else' Statement
+     *  ;
+     */
+    IfStatement() {
+        this._eat('if')
+        this._eat('(')
+        const test = this.Expression()
+        this._eat(')')
+        const consequent = this.Statement()
+        const alternate = this._lookahead != null && this._lookahead.type === 'else' ? this._eat('else') && this.Statement() : null
+        return {
+            type: 'IfStatement',
+            test,
+            consequent,
+            alternate
         }
     }
     /**
@@ -159,12 +182,12 @@ class Parser {
     }
     /**
      * AssignmentExpression
-     *  : AdditiveExpression
+     *  : RelationalExpression
      *  | LeftHandSideExpression AssignmentOperator AssignmentExression
      *  ;
     */
     AssignmentExpression() {
-        const left = this.AdditiveExpression();
+        const left = this.RelationalExpression();
         if (!this._isAssignmentOperator(this._lookahead.type)) {
             return left
         }
@@ -174,6 +197,20 @@ class Parser {
             left: this._checkValidAssignmentTarget(left),
             right: this.AssignmentExpression()
         }
+    }
+    /**
+     * RELATIONAL_OPERATOR: >, >=, <, <=
+     * x < y
+     * x >= y
+     * x < y
+     * x <= y
+     * 
+     * RelationalExpression
+     *  : AdditiveExpression
+     *  | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
+    */
+    RelationalExpression() {
+        return this._BinaryExpression('AdditiveExpression', 'RELATIONAL_OPERATOR')
     }
     /**
      * LeftHandSideExpression
