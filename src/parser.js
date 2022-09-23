@@ -51,12 +51,12 @@ class Parser {
         switch (this._lookahead.type) {
             case ";":
                 return this.EmptyStatement();
-            case 'if':
-                return this.IfStatement()
+            case "if":
+                return this.IfStatement();
             case "{":
                 return this.BlockStatement();
-            case 'let':
-                return this.VariableStatement()
+            case "let":
+                return this.VariableStatement();
             default:
                 return this.ExpressionStatement();
         }
@@ -68,68 +68,74 @@ class Parser {
      *  ;
      */
     IfStatement() {
-        this._eat('if')
-        this._eat('(')
-        const test = this.Expression()
-        this._eat(')')
-        const consequent = this.Statement()
-        const alternate = this._lookahead != null && this._lookahead.type === 'else' ? this._eat('else') && this.Statement() : null
+        this._eat("if");
+        this._eat("(");
+        const test = this.Expression();
+        this._eat(")");
+        const consequent = this.Statement();
+        const alternate =
+            this._lookahead != null && this._lookahead.type === "else"
+                ? this._eat("else") && this.Statement()
+                : null;
         return {
-            type: 'IfStatement',
+            type: "IfStatement",
             test,
             consequent,
-            alternate
-        }
+            alternate,
+        };
     }
     /**
      * VariableStatement
      *  : 'let' VariableDeclarationList ';'
      *  ;
-    */
+     */
     VariableStatement() {
-        this._eat('let');
-        const declarations = this.VariableDeclarationList()
-        this._eat(';')
+        this._eat("let");
+        const declarations = this.VariableDeclarationList();
+        this._eat(";");
         return {
-            type: 'VariableStatement',
-            declarations
-        }
+            type: "VariableStatement",
+            declarations,
+        };
     }
     /**
      * VariableDeclarationList
      *  : VariableDeclaration
      *  | VariableDeclarationList ',' VariableDeclaration
      *  ;
-    */
+     */
     VariableDeclarationList() {
-        const declarations = []
+        const declarations = [];
         do {
-            declarations.push(this.VariableDeclaration())
-        } while (this._lookahead.type === ',' && this._eat(','))
+            declarations.push(this.VariableDeclaration());
+        } while (this._lookahead.type === "," && this._eat(","));
         return declarations;
     }
     /**
      * VariableDeclaration
      *  : Identifier OptVariableInitializer
      *  ;
-    */
+     */
     VariableDeclaration() {
-        const id = this.Identifier()
-        const init = this._lookahead.type !== ';' && this._lookahead.type !== ',' ? this.VariableInitializer() : null
+        const id = this.Identifier();
+        const init =
+            this._lookahead.type !== ";" && this._lookahead.type !== ","
+                ? this.VariableInitializer()
+                : null;
         return {
-            type: 'VariableDeclaration',
+            type: "VariableDeclaration",
             id,
-            init
-        }
+            init,
+        };
     }
     /**
      * VariableInitializer
      *  : SIMPLE_ASSIGN AssignmentExpression
      *  ;
-    */
+     */
     VariableInitializer() {
-        this._eat('SIMPLE_ASSIGN')
-        return this.AssignmentExpression()
+        this._eat("SIMPLE_ASSIGN");
+        return this.AssignmentExpression();
     }
     /**
      * EmptyStatement
@@ -182,21 +188,33 @@ class Parser {
     }
     /**
      * AssignmentExpression
-     *  : RelationalExpression
+     *  : EqualityExpression
      *  | LeftHandSideExpression AssignmentOperator AssignmentExression
      *  ;
-    */
+     */
     AssignmentExpression() {
-        const left = this.RelationalExpression();
+        const left = this.EqualityExpression();
         if (!this._isAssignmentOperator(this._lookahead.type)) {
-            return left
+            return left;
         }
         return {
-            type: 'AssignmentExpression',
+            type: "AssignmentExpression",
             operator: this.AssignmentOperator().value,
             left: this._checkValidAssignmentTarget(left),
-            right: this.AssignmentExpression()
-        }
+            right: this.AssignmentExpression(),
+        };
+    }
+    /**
+     * EQUALITY_OPERATOR: ==, !=
+     * x == y
+     * x != y
+     * EqualityExpression
+     *  : RelationalExpression EQUALITY_OPERATOR EqualityExpression
+     *  | RelationalExpression
+     *  ;
+     */
+    EqualityExpression() {
+        return this._BinaryExpression("RelationalExpression", "EQUALITY_OPERATOR");
     }
     /**
      * RELATIONAL_OPERATOR: >, >=, <, <=
@@ -204,57 +222,57 @@ class Parser {
      * x >= y
      * x < y
      * x <= y
-     * 
+     *
      * RelationalExpression
      *  : AdditiveExpression
      *  | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
-    */
+     */
     RelationalExpression() {
-        return this._BinaryExpression('AdditiveExpression', 'RELATIONAL_OPERATOR')
+        return this._BinaryExpression("AdditiveExpression", "RELATIONAL_OPERATOR");
     }
     /**
      * LeftHandSideExpression
      *  : Identifier
      *  ;
-    */
+     */
     LeftHandSideExpression() {
-        return this.Identifier()
+        return this.Identifier();
     }
     /**
      * Identifier
      *  : IDENTIFIER
      *  ;
-    */
+     */
     Identifier() {
-        const name = this._eat('IDENTIFIER').value
+        const name = this._eat("IDENTIFIER").value;
         return {
-            type: 'Identifier',
-            name
-        }
+            type: "Identifier",
+            name,
+        };
     }
     _checkValidAssignmentTarget(node) {
-        if (node.type === 'Identifier') {
-            return node
+        if (node.type === "Identifier") {
+            return node;
         }
-        throw new SyntaxError('Invalid left-hand side in assignment expression')
+        throw new SyntaxError("Invalid left-hand side in assignment expression");
     }
     /**
      * token是否是赋值操作符
-    */
+     */
     _isAssignmentOperator(tokenType) {
-        return tokenType === 'SIMPLE_ASSIGN' || tokenType === 'COMPLEX_ASSIGN'
+        return tokenType === "SIMPLE_ASSIGN" || tokenType === "COMPLEX_ASSIGN";
     }
     /**
      * AssignmentOperator
      *  : SIMPLE_ASSIGN
      *  | COMPLEX_ASSIGN
      *  ;
-    */
+     */
     AssignmentOperator() {
-        if (this._lookahead.type === 'SIMPLE_ASSIGN') {
-            return this._eat('SIMPLE_ASSIGN')
+        if (this._lookahead.type === "SIMPLE_ASSIGN") {
+            return this._eat("SIMPLE_ASSIGN");
         }
-        return this._eat('COMPLEX_ASSIGN')
+        return this._eat("COMPLEX_ASSIGN");
     }
     /**
      * AdditiveExpression
@@ -263,21 +281,27 @@ class Parser {
      *  ;
      */
     AdditiveExpression() {
-        return this._BinaryExpression('MultiplicativeExpression', 'ADDITIVE_OPERATOR')
+        return this._BinaryExpression(
+            "MultiplicativeExpression",
+            "ADDITIVE_OPERATOR"
+        );
     }
     /**
      * MultiplicativeExpression
      *  : PrimaryExpression
      *  | MultiplicativeExpression MULTIPLICATIVE_OPERATOR PrimaryExpression -> PrimaryExpression MULTIPLICATIVE_OPERATOR PrimaryExpression MULTIPLICATIVE_OPERATOR PrimaryExpression
      *  ;
-    */
+     */
     MultiplicativeExpression() {
-        return this._BinaryExpression('PrimaryExpression', 'MULTIPLICATIVE_OPERATOR')
+        return this._BinaryExpression(
+            "PrimaryExpression",
+            "MULTIPLICATIVE_OPERATOR"
+        );
     }
     /**
      * Generic binary expression
-     * 
-    */
+     *
+     */
     _BinaryExpression(builderName, operatorToken) {
         let left = this[builderName]();
         while (this._lookahead.type === operatorToken) {
@@ -298,38 +322,40 @@ class Parser {
      *  | ParenthesizedExpression
      *  | LeftHandSideExpression
      *  ;
-     * 
-    */
+     *
+     */
     PrimaryExpression() {
         if (this._isLiteral(this._lookahead.type)) {
-            return this.Literal()
+            return this.Literal();
         }
         switch (this._lookahead.type) {
-            case '(':
+            case "(":
                 return this.ParenthesizedExpression();
             default:
-                return this.LeftHandSideExpression()
+                return this.LeftHandSideExpression();
         }
     }
     _isLiteral(tokenType) {
-        return tokenType === 'NUMBER' || tokenType === 'STRING'
+        return tokenType === "NUMBER" || tokenType === "STRING" || tokenType === 'true' || tokenType === 'false' || tokenType === 'null';
     }
     /**
      * ParenthesizedExpression
      *  : '(' Expression ')'
      *  ;
-     * 
-    */
+     *
+     */
     ParenthesizedExpression() {
-        this._eat('(')
-        const expression = this.Expression()
-        this._eat(')')
-        return expression
+        this._eat("(");
+        const expression = this.Expression();
+        this._eat(")");
+        return expression;
     }
     /**
      * Literal
      *  : NumericLiteral
      *  | StringLiteral
+     *  | BooleanLiteral
+     *  | NullLiteral
      *  ;
      */
     Literal() {
@@ -338,14 +364,44 @@ class Parser {
                 return this.NumericLiteral();
             case "STRING":
                 return this.StringLiteral();
+            case "true":
+                return this.BooleanLiteral(true);
+            case "false":
+                return this.BooleanLiteral(false);
+            case "null":
+                return this.NullLiteral(null);
         }
         throw new SyntaxError(`Literal: unexpected literal production`);
+    }
+    /**
+     * BooleanLiteral
+     *  : 'true'
+     *  | 'false'
+     *  ;
+     */
+    BooleanLiteral(value) {
+        this._eat(value ? "true" : "false");
+        return {
+            type: "BooleanLiteral",
+            value,
+        };
+    }
+    /**
+     * NullLiteral
+     *  : 'null'
+     *  ;
+    */
+    NullLiteral(value) {
+        this._eat('null');
+        return {
+            type: "NullLiteral",
+            value: null,
+        };
     }
     /**
      * StringLiteral
      *  : STRING
      *  ;
-     *
      */
     StringLiteral() {
         const token = this._eat("STRING");

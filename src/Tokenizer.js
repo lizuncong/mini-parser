@@ -2,22 +2,39 @@ const Spec = [
     [/^\s+/, null], // 跳过空格
     [/^\/\/.*/, null], // 跳过单行注释
     [/^\/\*[\s\S]*?\*\//, null], // 跳过多行注释
+    /** 符号Symbols **/
     [/^;/, ';'], // 跳过分号
     [/^\{/, '{'],
     [/^\}/, '}'],
     [/^\(/, '('],
     [/^\)/, ')'],
     [/^,/, ','],
+    /** 关键字Keywords **/
     [/^\blet\b/, 'let'],
     [/^\bif\b/, 'if'],
     [/^\belse\b/, 'else'],
+    [/^\btrue\b/, 'true'],
+    [/^\bfalse\b/, 'false'],
+    [/^\bnull\b/, 'null'],
+    /** Numbers **/
     [/^\d+/, "NUMBER"],
+    /** Identifiers **/
     [/^\w+/, 'IDENTIFIER'],
+    /** Equality operators: ==, !== **/
+    [/^[=!]=/, 'EQUALITY_OPERATOR'],
+
+    /** Assignment operators: =, *=, /=, +=, -= **/
     [/^=/, 'SIMPLE_ASSIGN'], // 简单的赋值
     [/^[\*\/\+\-]=/, 'COMPLEX_ASSIGN'],
+    /** Math operators: +, -, *, **/
     [/^[+\-]/, 'ADDITIVE_OPERATOR'],
     [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
+    /** Relational operators: >, >=, <, <= **/
     [/^[><]=?/, 'RELATIONAL_OPERATOR'],
+    /** Logical operators: &&, || **/
+    [/^&&/, 'LOGICAL_AND'],
+    [/^\|\|/, 'LOGICAL_OR'],
+    /** 字符串 **/
     [/^"[^"]*"/, "STRING"],
     [/^'[^']*'/, "STRING"],
 ];
