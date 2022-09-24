@@ -205,6 +205,44 @@ class Parser {
         };
     }
     /**
+     * Logical OR expression
+     * x || y
+     * LogicalORExpression
+     *  : EqualityExpression LOGICAL_OR LogicalORExpression
+     *  | EqualityExpression
+     *  ;
+    */
+    LogicalORExpression() {
+        return this._LogicalExpression("LogicalORExpression", "LOGICAL_OR");
+    }
+    /**
+     * Logical AND expression
+     * x && y
+     * LogicalANDExpression
+     *  : EqualityExpression LOGICAL_AND LogicalANDExpression
+     *  | EqualityExpression
+     *  ;
+    */
+    LogicalANDExpression() {
+        return this._LogicalExpression("LogicalANDExpression", "LOGICAL_AND");
+    }
+    /**
+     * Generic helper for LogicalExpression nodes
+    */
+    _LogicalExpression(builderName, operatorToken) {
+        let left = this[builderName]()
+        while (this._lookahead.type === operatorToken) {
+            const operator = this._eat(operatorToken).value
+            const right = this[builderName]()
+            left = {
+                type: 'LogicalExpression',
+                operator,
+                left,
+                right
+            }
+        }
+    }
+    /**
      * EQUALITY_OPERATOR: ==, !=
      * x == y
      * x != y
