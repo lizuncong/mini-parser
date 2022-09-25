@@ -188,12 +188,12 @@ class Parser {
     }
     /**
      * AssignmentExpression
-     *  : EqualityExpression
+     *  : LogicalORExpression
      *  | LeftHandSideExpression AssignmentOperator AssignmentExression
      *  ;
      */
     AssignmentExpression() {
-        const left = this.EqualityExpression();
+        const left = this.LogicalORExpression();
         if (!this._isAssignmentOperator(this._lookahead.type)) {
             return left;
         }
@@ -208,12 +208,12 @@ class Parser {
      * Logical OR expression
      * x || y
      * LogicalORExpression
-     *  : EqualityExpression LOGICAL_OR LogicalORExpression
-     *  | EqualityExpression
+     *  : LogicalANDExpression LOGICAL_OR LogicalORExpression
+     *  | LogicalORExpression
      *  ;
     */
     LogicalORExpression() {
-        return this._LogicalExpression("LogicalORExpression", "LOGICAL_OR");
+        return this._LogicalExpression("LogicalANDExpression", "LOGICAL_OR");
     }
     /**
      * Logical AND expression
@@ -224,7 +224,7 @@ class Parser {
      *  ;
     */
     LogicalANDExpression() {
-        return this._LogicalExpression("LogicalANDExpression", "LOGICAL_AND");
+        return this._LogicalExpression("EqualityExpression", "LOGICAL_AND");
     }
     /**
      * Generic helper for LogicalExpression nodes
@@ -241,6 +241,7 @@ class Parser {
                 right
             }
         }
+        return left
     }
     /**
      * EQUALITY_OPERATOR: ==, !=
@@ -267,14 +268,6 @@ class Parser {
      */
     RelationalExpression() {
         return this._BinaryExpression("AdditiveExpression", "RELATIONAL_OPERATOR");
-    }
-    /**
-     * LeftHandSideExpression
-     *  : Identifier
-     *  ;
-     */
-    LeftHandSideExpression() {
-        return this.Identifier();
     }
     /**
      * Identifier
@@ -326,13 +319,13 @@ class Parser {
     }
     /**
      * MultiplicativeExpression
-     *  : PrimaryExpression
-     *  | MultiplicativeExpression MULTIPLICATIVE_OPERATOR PrimaryExpression -> PrimaryExpression MULTIPLICATIVE_OPERATOR PrimaryExpression MULTIPLICATIVE_OPERATOR PrimaryExpression
+     *  : UnaryExpression
+     *  | MultiplicativeExpression MULTIPLICATIVE_OPERATOR UnaryExpression
      *  ;
      */
     MultiplicativeExpression() {
         return this._BinaryExpression(
-            "PrimaryExpression",
+            "UnaryExpression",
             "MULTIPLICATIVE_OPERATOR"
         );
     }
@@ -355,12 +348,46 @@ class Parser {
         return left;
     }
     /**
+     * UnaryExpression
+     *  : LeftHandSideExpression
+     *  | ADDITIVE_OPERATOR UnaryExpression
+     *  | LOGICAL_NOT UnaryExpression
+     *  ;
+    */
+    UnaryExpression() {
+        let operator;
+        switch (this._lookahead.type) {
+            case 'ADDITIVE_OPERATOR':
+                operator = this._eat('ADDITIVE_OPERATOR').value;
+                break;
+            case 'LOGICAL_NOT':
+                operator = this._eat('LOGICAL_NOT').value;
+                break;
+        }
+        // operator也可能是undefined，因此这里不能直接用 !==
+        if (operator != null) {
+            return {
+                type: 'UnaryExpression',
+                operator,
+                argument: this.UnaryExpression() // --x
+            }
+        }
+        return this.LeftHandSideExpression();
+    }
+    /**
+     * LeftHandSideExpression
+     *  : PrimaryExpression
+     *  ;
+    */
+    LeftHandSideExpression() {
+        return this.PrimaryExpression();
+    }
+    /**
      * PrimaryExpression
      *  : Literal
      *  | ParenthesizedExpression
-     *  | LeftHandSideExpression
+     *  | Identifier
      *  ;
-     *
      */
     PrimaryExpression() {
         if (this._isLiteral(this._lookahead.type)) {
@@ -369,6 +396,8 @@ class Parser {
         switch (this._lookahead.type) {
             case "(":
                 return this.ParenthesizedExpression();
+            case 'IDENTIFIER':
+                return this.Identifier();
             default:
                 return this.LeftHandSideExpression();
         }

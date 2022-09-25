@@ -34,6 +34,8 @@ const Spec = [
     /** Logical operators: &&, || **/
     [/^&&/, 'LOGICAL_AND'],
     [/^\|\|/, 'LOGICAL_OR'],
+    [/^!/, 'LOGICAL_NOT'],
+
     /** 字符串 **/
     [/^"[^"]*"/, "STRING"],
     [/^'[^']*'/, "STRING"],
