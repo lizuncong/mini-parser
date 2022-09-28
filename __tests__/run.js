@@ -22,7 +22,14 @@ const parser = new Parser()
 // exec用于手动测试
 function exec() {
     const program = ` 
-       a.b.c['d'];
+       let s = "Hello, world!";
+       let i = 0;
+       while(i < s.length){
+         console.log(i, s[i]);
+         i += 1;
+       }
+       square(2);
+       getCallback()();
     `
 
 
