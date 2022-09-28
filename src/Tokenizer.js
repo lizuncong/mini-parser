@@ -9,6 +9,10 @@ const Spec = [
     [/^\(/, '('],
     [/^\)/, ')'],
     [/^,/, ','],
+    [/^\./, '.'],
+    [/^\[/, '['],
+    [/^\]/, ']'],
+
     /** 关键字Keywords **/
     [/^\blet\b/, 'let'],
     [/^\bif\b/, 'if'],
@@ -16,6 +20,12 @@ const Spec = [
     [/^\btrue\b/, 'true'],
     [/^\bfalse\b/, 'false'],
     [/^\bnull\b/, 'null'],
+    [/^\bwhile\b/, 'while'],
+    [/^\bdo\b/, 'do'],
+    [/^\bfor\b/, 'for'],
+    [/^\bfunction\b/, 'function'],
+    [/^\breturn\b/, 'return'],
+
     /** Numbers **/
     [/^\d+/, "NUMBER"],
     /** Identifiers **/

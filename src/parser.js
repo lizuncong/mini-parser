@@ -44,6 +44,9 @@ class Parser {
      *  | EmptyStatement
      *  | VariableStatement
      *  | IfStatement
+     *  | IterationStatement
+     *  | FunctionDeclaration
+     *  | ReturnStatement
      *  ;
      *
      */
@@ -57,9 +60,156 @@ class Parser {
                 return this.BlockStatement();
             case "let":
                 return this.VariableStatement();
+            case 'function':
+                return this.FunctionDeclaration();
+            case 'return':
+                return this.ReturnStatement();
+            case 'while':
+            case 'do':
+            case 'for':
+                return this.IterationStatement();
             default:
                 return this.ExpressionStatement();
         }
+    }
+    /**
+     * FunctionDeclaration
+     *  : 'function' Identifier '(' OptFormalParameterList ')' BlockStatement
+     *  ;
+    */
+    FunctionDeclaration() {
+        this._eat('function');
+        const name = this.Identifier();
+        this._eat('(');
+        const params = this._lookahead.type !== ')' ? this.FormalParameterList() : [];
+        this._eat(')')
+        const body = this.BlockStatement();
+        return {
+            type: 'FunctionDeclaration',
+            name,
+            params,
+            body
+        }
+    }
+    /**
+     * FormalParameterList
+     *  : Identifier
+     *  | FormalParameterList ',' Identifier
+     *  ;
+    */
+    FormalParameterList() {
+        const params = []
+        do {
+            params.push(this.Identifier());
+        } while (this._lookahead.type === ',' && this._eat(','))
+        return params
+    }
+    /**
+     * ReturnStatement
+     *  : 'return' OptExpression ';'
+     *  ;
+    */
+    ReturnStatement() {
+        this._eat('return');
+        const argument = this._lookahead.type !== ';' ? this.Expression() : null;
+        this._eat(';');
+        return {
+            type: 'ReturnStatement',
+            argument
+        }
+    }
+    /**
+     * IterationStatement
+     *  : WhileStatement
+     *  | DoWhileStatement
+     *  | ForStatement
+     *  ;
+    */
+    IterationStatement() {
+        switch (this._lookahead.type) {
+            case 'while':
+                return this.WhileStatement();
+            case 'do':
+                return this.DoWhileStatement();
+            case 'for':
+                return this.ForStatement();
+        }
+    }
+    /**
+     * WhileStatement
+     *  : 'while' '(' Expression ')' Statement
+     *  ;
+    */
+    WhileStatement() {
+        this._eat('while');
+        this._eat('(');
+        const test = this.Expression();
+        this._eat(')');
+        const body = this.Statement();
+        return {
+            type: 'WhileStatement',
+            test,
+            body
+        }
+    }
+    /**
+     * DoWhileStatement
+     *  : 'do' Statement 'while' '(' Expression ')' ';'
+     *  ;
+    */
+    DoWhileStatement() {
+        this._eat('do');
+        const body = this.Statement();
+        this._eat('while');
+        this._eat('(');
+        const test = this.Expression();
+        this._eat(')');
+        this._eat(';');
+        return {
+            type: 'DoWhileStatement',
+            body,
+            test
+        }
+    }
+    /**
+     * ForStatement
+     *  : 'for' '(' OptForStatementInit ';' OptExpression ';' OptExpression ')' Statement
+     *  ;
+    */
+    ForStatement() {
+        this._eat('for');
+        this._eat('(');
+
+        const init = this._lookahead.type !== ';' ? this.ForStatementInit() : null;
+        this._eat(';');
+
+        const test = this._lookahead.type !== ';' ? this.Expression() : null;
+        this._eat(';');
+
+        const update = this._lookahead.type !== ')' ? this.Expression() : null;
+        this._eat(')');
+
+        const body = this.Statement()
+
+        return {
+            type: 'ForStatement',
+            init,
+            test,
+            update,
+            body
+        }
+    }
+    /**
+     * ForStatementInit
+     *  : VariableStatementInit
+     *  | Expression
+     *  ;
+    */
+    ForStatementInit() {
+        if (this._lookahead.type === 'let') {
+            return this.VariableStatementInit();
+        }
+        return this.Expression()
     }
     /**
      * IfStatement
@@ -85,18 +235,27 @@ class Parser {
         };
     }
     /**
-     * VariableStatement
+     * VariableStatementInit
      *  : 'let' VariableDeclarationList ';'
      *  ;
-     */
-    VariableStatement() {
+    */
+    VariableStatementInit() {
         this._eat("let");
         const declarations = this.VariableDeclarationList();
-        this._eat(";");
         return {
             type: "VariableStatement",
             declarations,
         };
+    }
+    /**
+     * VariableStatement
+     *  : VariableStatementInit ';'
+     *  ;
+     */
+    VariableStatement() {
+        const variableStatement = this.VariableStatementInit();
+        this._eat(";");
+        return variableStatement
     }
     /**
      * VariableDeclarationList
@@ -282,7 +441,7 @@ class Parser {
         };
     }
     _checkValidAssignmentTarget(node) {
-        if (node.type === "Identifier") {
+        if (node.type === "Identifier" || node.type === 'MemberExpression') {
             return node;
         }
         throw new SyntaxError("Invalid left-hand side in assignment expression");
@@ -376,11 +535,45 @@ class Parser {
     }
     /**
      * LeftHandSideExpression
-     *  : PrimaryExpression
+     *  : MemberExpression
      *  ;
     */
     LeftHandSideExpression() {
-        return this.PrimaryExpression();
+        return this.MemberExpression();
+    }
+    /**
+     * MemberExpression
+     *  : PrimaryExpression
+     *  | MemberExpression '.' Identifier
+     *  | MemberExpression '[' Expression ']'
+     *  ;
+    */
+    MemberExpression() {
+        let object = this.PrimaryExpression();
+        while (this._lookahead.type === '.' || this._lookahead.type === '[') {
+            if (this._lookahead.type === '.') {
+                this._eat('.');
+                const property = this.Identifier()
+                object = {
+                    type: 'MemberExpression',
+                    computed: false,
+                    object,
+                    property
+                }
+            }
+            if (this._lookahead.type === '[') {
+                this._eat('[')
+                const property = this.Expression()
+                this._eat(']')
+                object = {
+                    type: 'MemberExpression',
+                    computed: true,
+                    object,
+                    property
+                }
+            }
+        }
+        return object;
     }
     /**
      * PrimaryExpression

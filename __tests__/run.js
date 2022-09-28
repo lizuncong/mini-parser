@@ -11,7 +11,9 @@ const tests = [
     require('./relational-test'),
     require('./equality-test'),
     require('./logical-test'),
-    require('./unary-test')
+    require('./unary-test'),
+    require('./while-test'),
+    require('./function-declaration-test')
 ]
 
 const parser = new Parser()
@@ -20,8 +22,9 @@ const parser = new Parser()
 // exec用于手动测试
 function exec() {
     const program = ` 
-        +x * -10;
+       a.b.c['d'];
     `
+
 
     const ast = parser.parse(program)
 
@@ -33,6 +36,6 @@ function test(program, expected) {
     const ast = parser.parse(program)
     assert.deepEqual(ast, expected)
 }
-// tests.forEach(testRun => testRun(test))
+tests.forEach(testRun => testRun(test))
 
 console.log('All assertions passed!')
