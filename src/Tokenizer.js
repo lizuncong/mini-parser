@@ -25,6 +25,12 @@ const Spec = [
     [/^\bfor\b/, 'for'],
     [/^\bfunction\b/, 'function'],
     [/^\breturn\b/, 'return'],
+    [/^\bclass\b/, 'class'],
+    [/^\bextends\b/, 'extends'],
+    [/^\bsuper\b/, 'super'],
+    [/^\bnew\b/, 'new'],
+    [/^\bthis\b/, 'this'],
+
 
     /** Numbers **/
     [/^\d+/, "NUMBER"],
